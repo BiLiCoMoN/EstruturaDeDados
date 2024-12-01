@@ -1,0 +1,133 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+
+// Estrutura para representar um ponto no espaço bidimensional
+typedef struct {
+    int x;
+    int y;
+    double distance; // Distância Euclidiana até a origem
+} Point;
+
+// Função para calcular a distância Euclidiana de um ponto até a origem
+double calculateDistance(const Point *p) {
+    return sqrt(p->x * p->x + p->y * p->y);
+}
+
+// Função de comparação para ordenação
+int comparePoints(const Point *pa, const Point *pb) {
+    return (pa->distance < pb->distance) ? -1 : (pa->distance > pb->distance) ? 1 : 0;
+}
+
+// Função de ordenação por inserção
+void insertionSort(Point points[], int numPoints) {
+    for (int i = 1; i < numPoints; i++) {
+        Point key = points[i];
+        int j = i - 1;
+        while (j >= 0 && comparePoints(&points[j], &key) > 0) {
+            points[j + 1] = points[j];
+            j--;
+        }
+        points[j + 1] = key;
+    }
+}
+
+// Função para ler pontos de uma única linha e retornar o número de pontos lidos
+int readPointsFromLine(const char *line, Point points[], int maxPoints) {
+    int numPoints = 0;
+    char *p = line;
+    // Pula a palavra "points"
+    while (*p != '(') {
+        p++;
+    }
+    p++; // Pula o parêntese de abertura
+
+    // Continua lendo pontos até atingir o máximo ou não haver mais pontos na linha
+    while (sscanf(p, "%d,%d", &points[numPoints].x, &points[numPoints].y) == 2) {
+        points[numPoints].distance = calculateDistance(&points[numPoints]);
+        numPoints++;
+
+        // Move o ponteiro para o próximo par de coordenadas
+        p = strchr(p, '('); // Encontra o próximo parêntese de abertura
+        if (p != NULL) {
+            p++; // Pula o parêntese de abertura
+        } else {
+            // Não há mais pontos na linha
+            break;
+        }
+    }
+
+    return numPoints;
+}
+
+// Função principal
+int main() {
+    const char *inputFilename = "L0Q1.in";
+    const char *outputFilename = "L0Q1.out";
+    const int maxPoints = 1000; // Ajuste conforme necessário
+    Point points[maxPoints];
+    int numPoints;
+
+    // Abrir o arquivo de entrada
+    FILE *inputFile = fopen(inputFilename, "r");
+    if (inputFile == NULL) {
+        perror("Erro ao abrir o arquivo de entrada");
+        return 1;
+    }
+
+    // Abrir o arquivo de saída
+    FILE *outputFile = fopen(outputFilename, "w");
+    if (outputFile == NULL) {
+        perror("Erro ao abrir o arquivo de saída");
+        fclose(inputFile);
+        return 1;
+    }
+
+    char line[256]; // Ajuste o tamanho conforme necessário
+
+    // Processar cada linha do arquivo de entrada
+    while (fgets(line, sizeof(line), inputFile) != NULL) {
+        numPoints = readPointsFromLine(line, points, maxPoints);
+
+        int originalOrder[numPoints];
+        for (int i = 0; i < numPoints; i++) {
+            originalOrder[i] = i;
+        }
+
+        // Calcular a distância total entre os pontos na ordem original
+        double totalDistance = 0.0;
+        for (int i = 0; i < numPoints - 1; i++) {
+            totalDistance += sqrt(pow(points[i + 1].x - points[i].x, 2) + pow(points[i + 1].y - points[i].y, 2));
+        }
+
+        // Ordenar os pontos baseados na distância até a origem
+        insertionSort(points, numPoints);
+
+        // Calcular a distância de atalho entre o primeiro e o último ponto
+        double shortcutDistance = sqrt(pow(points[numPoints - 1].x - points[0].x, 2) + pow(points[numPoints - 1].y - points[0].y, 2));
+
+        // Reordenar os pontos de volta à ordem original
+        for (int i = 0; i < numPoints; i++) {
+            int originalIndex = originalOrder[i];
+            Point temp = points[i];
+            points[i] = points[originalIndex];
+            points[originalIndex] = temp;
+        }
+
+        // Formatar a saída no formato especificado
+        fprintf(outputFile, "points (");
+        for (int i = 0; i < numPoints; i++) {
+            fprintf(outputFile, "%d,%d", points[i].x, points[i].y);
+            if (i < numPoints - 1) {
+                fprintf(outputFile, ") (");
+            }
+        }
+        fprintf(outputFile, ") distance %.2f shortcut %.2f\n", totalDistance, shortcutDistance);
+    }
+
+    // Fechar os arquivos
+    fclose(inputFile);
+    fclose(outputFile);
+
+    return 0;
+}
