@@ -2,6 +2,10 @@
 # e operadores =, -, /, * em notação polonesa. Como no ex: 45-3*47+/ 
 # (Corresponde a [(4-5)*3]/(4+7)) Apresente o codigo usando pilha para calcular a expressão
 
+//###################################################################
+//##Incluído recurso de inserção de expressão por parte do usuário.##
+//###################################################################
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
